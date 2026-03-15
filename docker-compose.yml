@@ -1,0 +1,21 @@
+version: '3.9'
+services:
+  server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.server
+    ports:
+      - "3001:3001"
+    environment:
+      - TURN_SECRET=${TURN_SECRET}
+      - PORT=3001
+    restart: unless-stopped
+
+  coturn:
+    image: coturn/coturn:latest
+    network_mode: host
+    volumes:
+      - ./docker/coturn.conf:/etc/coturn/turnserver.conf:ro
+    environment:
+      - TURN_SECRET=${TURN_SECRET}
+    restart: unless-stopped
