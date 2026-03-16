@@ -10,7 +10,7 @@ export type ClientMessage =
 
 // Server → Client
 export type ServerMessage =
-  | { type: 'joined'; peerId: string; peerCount: number; turnCredentials: TurnCredentials }
+  | { type: 'joined'; peerId: string; peerCount: number; existingPeers: string[]; turnCredentials: TurnCredentials }
   | { type: 'peer-joined'; peerId: string }
   | { type: 'peer-left'; peerId: string }
   | { type: 'offer'; fromId: string; payload: string }

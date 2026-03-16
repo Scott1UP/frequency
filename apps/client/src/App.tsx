@@ -4,23 +4,58 @@ import { usePTT } from './hooks/usePTT';
 import PTTButton from './components/PTTButton';
 
 export default function App() {
-  const { localStream, connected, error, initialize, cleanup } = useWebRTC();
+  const {
+    localStream,
+    connected,
+    roomConnected,
+    peerCount,
+    error,
+    initialize,
+    cleanup,
+  } = useWebRTC();
+
   const { transmitting, startTalking, stopTalking } = usePTT({
     localStream,
     connected,
   });
 
-  useEffect(() => {
-    initialize();
-    return cleanup;
-  }, [initialize, cleanup]);
+  // Clean up on unmount only
+  useEffect(() => cleanup, [cleanup]);
 
-  // Also handle mouseup on window for drag-off-button
+  // Handle mouseup on window for drag-off-button
   useEffect(() => {
     const onMouseUp = () => stopTalking();
     window.addEventListener('mouseup', onMouseUp);
     return () => window.removeEventListener('mouseup', onMouseUp);
   }, [stopTalking]);
+
+  // Not yet started — show join button
+  if (!localStream && !error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-4">
+        <h1 className="text-3xl font-bold tracking-widest text-gray-300 uppercase">
+          Frequency
+        </h1>
+        <button
+          onClick={initialize}
+          className="px-8 py-4 rounded-full bg-gray-700 text-gray-200 text-lg font-semibold hover:bg-gray-600 active:bg-gray-500 transition-colors"
+        >
+          Join Room
+        </button>
+        <p className="text-xs text-gray-600 text-center max-w-xs">
+          Make sure the signalling server is running: cd apps/server && npm run dev
+        </p>
+      </div>
+    );
+  }
+
+  const statusText = error
+    ? null
+    : connected
+      ? `Connected — ${peerCount} in room`
+      : roomConnected
+        ? 'In room, waiting for peers...'
+        : 'Connecting to server...';
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-8 p-4">
@@ -35,9 +70,7 @@ export default function App() {
         </div>
       ) : (
         <>
-          <p className="text-sm text-gray-500">
-            {connected ? 'Connected to peer' : 'Waiting for peer...'}
-          </p>
+          <p className="text-sm text-gray-500">{statusText}</p>
 
           <PTTButton
             connected={connected}
@@ -46,12 +79,6 @@ export default function App() {
             stopTalking={stopTalking}
           />
         </>
-      )}
-
-      {!error && !connected && (
-        <p className="text-xs text-gray-600 text-center max-w-xs">
-          Open this page in two tabs to test push-to-talk voice
-        </p>
       )}
     </div>
   );
